@@ -1,0 +1,121 @@
+---
+title: "ABAPPM"
+author: "gitrific"
+date: "11/01/2020"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+Ustawianie ścieżki roboczej: 
+
+```{r}
+
+path <- "C:/Users/joann/Dropbox/SGH/ABAPPM"
+setwd(path)
+```
+
+Instalacja i wczytywanie niezbędnych pakietóW: 
+
+```{r}
+#install.packages(c("sas7bdat", "mice", "VIM"))
+require(sas7bdat)
+require(mice)
+require(VIM)
+```
+
+Wczytywanie danych
+
+```{r}
+df <- read.sas7bdat("a1.sas7bdat")
+
+df$HAPPY <- NULL
+
+```
+
+Podsumowanie zbioru:
+
+```{r}
+
+summary(df)
+
+```
+Funkcja md.pattern:
+
+```{r}
+
+head(md.pattern(df, rotate.names = TRUE), n= 10)
+
+```
+
+
+```{r}
+
+tail(md.pattern(df, plot = FALSE), n= 10)
+
+```
+```{r}
+
+mice_plot <- aggr(df,numbers=TRUE, sortVars=TRUE,
+                  labels=names(df), cex.axis=.7,
+                  gap=3, ylab=c("Missing data","Pattern"))
+
+```
+Imputacja:
+
+```{r}
+invisible(capture.output(imputed_Data <- mice(df, m=5, maxit = 50, seed = 0)))
+```
+Użyte parametry obowiązkowe:
+- df - dane załadowane do fukcji
+
+Użyte parametry dodatkowe:
+- m = 5 - liczba wielokrotności imputacji, tutaj 5; jest to liczba domyślna
+- maxit = 50 - maksymalna liczba iteracji; domyślnie - 5, co wydało się stosunkowo małą liczbą
+- method = 'pmm' - wybrana metoda, uszczegóławia metodę imputacji jaka ma być użyta na poszczególnych zmiennych - dopuszczalne wartości to NULL (wtedy funkcja odwołuje się do niezdefiniowanego tutaj parametru defaultMethod), pojedynczy string (metoda użyta dla wszystkich zmiennych) lub wektor stringów (dla każdej zmiennej metoda jest definiowana osobno); By default, the method uses pmm, predictive
+mean matching (numeric data) logreg, logistic regression imputation (binary
+data, factor with 2 levels) polyreg, polytomous regression imputation for unordered categorical data (factor > 2 levels) polr, proportional odds model for
+(ordered, > 2 levels).
+- seed = 0 to wartość dla przesuniecia generatora liczb pseudolosowych; generalnie zostawiamy niewypełnione - przy dodaniu wartości zyskujemy na powtarzalności naszych obliczeń (co jest ważne przy testowaniu);
+
+Podsumowanie imputowanych danych:
+
+```{r}
+summary(imputed_Data)
+
+#imputed_Data$imp$agea
+```
+Wybór jednego z uzupełnionych zbiorów i jego podsumowanie:
+
+```{r}
+completeData <- complete(imputed_Data,2)
+
+summary(completeData)
+
+```
+
+Sztuczki stringowe, ponieważ pisanie na sztywno stringów, które da się wyliczyć jest poniżej moich umiejętności:
+
+```{r}
+n <- names(df)
+f <- paste("HAPPY_BIN ~", paste(n[!n %in% "HAPPY_BIN"], collapse = " + "))
+
+```
+Tworzenie regresji logistycznej dla wszystkich 5 zbiorów imputowanych:
+
+```{r}
+
+fit <- with(data = imputed_Data, exp = glm(as.formula(f)))
+
+```
+Tworzenie wspólnego modelu dla wszystkich zbiorów i jego podsumowanie:
+
+```{r}
+
+combine <- pool(fit)
+summary(combine)
+```

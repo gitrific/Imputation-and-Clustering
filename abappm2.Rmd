@@ -1,0 +1,55 @@
+---
+title: "abappm2"
+author: "gitrific"
+date: "23/01/2020"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, root.dir = "C:/Users/joann/Desktop/abappm")
+```
+
+
+```{r}
+df <- read.csv("C:/Users/joann/Desktop/abappm/CC-GENERAL.csv")
+summary(df[,c("BALANCE", "BALANCE_FREQUENCY","CASH_ADVANCE", "CREDIT_LIMIT")])
+```
+
+Detekcja outlierów
+
+```{r}
+set.seed(20)
+df2 <- df[complete.cases(df),]
+
+# Detekcja i nadpisanie outlierów przez wartość 3/2 IQR
+
+for (val in c("BALANCE", "BALANCE_FREQUENCY","CASH_ADVANCE", "CREDIT_LIMIT")){
+  x <- df2[, val]
+  qnt <- quantile(x, probs=c(.25, .75), na.rm = T)
+  caps <- quantile(x, probs=c(.05, .95), na.rm = T)
+  H <- 1.5 * IQR(x, na.rm = T)
+  x[x < (qnt[1] - H)] <- caps[1]
+  x[x > (qnt[2] + H)] <- caps[2]
+  df2[, val] <- x
+
+}
+rm(x, qnt, caps, H, val)
+```
+
+Implementacja K-średnich
+
+```{r}
+myClusters <- kmeans(df2[,c("BALANCE", "BALANCE_FREQUENCY","CASH_ADVANCE", "CREDIT_LIMIT")],5, nstart = 20)
+```
+
+Drukowanie wykresów
+```{r, echo=FALSE}
+require(ggplot2)
+myClusters$cluster <- as.factor(myClusters$cluster)
+ggplot(df2, aes(CREDIT_LIMIT, BALANCE, color = myClusters$cluster)) + geom_point()+ scale_color_discrete(name = "Skupienia")
+
+ggplot(df2, aes(CREDIT_LIMIT, CASH_ADVANCE, color = myClusters$cluster)) + geom_point()+ scale_color_discrete(name = "Skupienia")
+
+ggplot(df2, aes(CASH_ADVANCE, BALANCE, color = myClusters$cluster)) + geom_point()+ scale_color_discrete(name = "Skupienia")
+
+```
