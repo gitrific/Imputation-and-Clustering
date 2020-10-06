@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ## R Markdown
 
 Ustawianie ścieżki roboczej: 
+(ang: setting working dir)
 
 ```{r}
 
@@ -19,7 +20,8 @@ path <- "C:/Users/joann/Dropbox/SGH/ABAPPM"
 setwd(path)
 ```
 
-Instalacja i wczytywanie niezbędnych pakietóW: 
+Instalacja i wczytywanie niezbędnych pakietóW:
+(ang: Installation and loading of necessary packages)
 
 ```{r}
 #install.packages(c("sas7bdat", "mice", "VIM"))
@@ -29,6 +31,7 @@ require(VIM)
 ```
 
 Wczytywanie danych
+(Enng: loading data)
 
 ```{r}
 df <- read.sas7bdat("a1.sas7bdat")
@@ -38,6 +41,7 @@ df$HAPPY <- NULL
 ```
 
 Podsumowanie zbioru:
+(Eng: Dataset summary)
 
 ```{r}
 
@@ -45,6 +49,7 @@ summary(df)
 
 ```
 Funkcja md.pattern:
+(Eng: md.pattern function)
 
 ```{r}
 
@@ -66,6 +71,7 @@ mice_plot <- aggr(df,numbers=TRUE, sortVars=TRUE,
 
 ```
 Imputacja:
+(Eng: imputation)
 
 ```{r}
 invisible(capture.output(imputed_Data <- mice(df, m=5, maxit = 50, seed = 0)))
@@ -76,13 +82,32 @@ Użyte parametry obowiązkowe:
 Użyte parametry dodatkowe:
 - m = 5 - liczba wielokrotności imputacji, tutaj 5; jest to liczba domyślna
 - maxit = 50 - maksymalna liczba iteracji; domyślnie - 5, co wydało się stosunkowo małą liczbą
-- method = 'pmm' - wybrana metoda, uszczegóławia metodę imputacji jaka ma być użyta na poszczególnych zmiennych - dopuszczalne wartości to NULL (wtedy funkcja odwołuje się do niezdefiniowanego tutaj parametru defaultMethod), pojedynczy string (metoda użyta dla wszystkich zmiennych) lub wektor stringów (dla każdej zmiennej metoda jest definiowana osobno); By default, the method uses pmm, predictive
-mean matching (numeric data) logreg, logistic regression imputation (binary
+- method = 'pmm' - wybrana metoda, uszczegóławia metodę imputacji jaka ma być użyta na poszczególnych zmiennych - dopuszczalne wartości to NULL (wtedy funkcja odwołuje się do 
+niezdefiniowanego tutaj parametru defaultMethod), pojedynczy string (metoda użyta dla wszystkich zmiennych) lub wektor stringów (dla każdej zmiennej metoda jest definiowana 
+osobno); By default, the method uses pmm, predictive mean matching (numeric data) logreg, logistic regression imputation (binary
 data, factor with 2 levels) polyreg, polytomous regression imputation for unordered categorical data (factor > 2 levels) polr, proportional odds model for
 (ordered, > 2 levels).
-- seed = 0 to wartość dla przesuniecia generatora liczb pseudolosowych; generalnie zostawiamy niewypełnione - przy dodaniu wartości zyskujemy na powtarzalności naszych obliczeń (co jest ważne przy testowaniu);
+- seed = 0 to wartość dla przesuniecia generatora liczb pseudolosowych; generalnie zostawiamy niewypełnione - przy dodaniu wartości zyskujemy na powtarzalności naszych 
+obliczeń (co jest ważne przy testowaniu);
 
 Podsumowanie imputowanych danych:
+
+(Eng: 
+mandatory params:
+- df = loaded dataset
+
+additional params:
+- m = 5 - number of multiples of the imputation, here 5; this is the default number
+- maxit = 50 - maximum number of iterations; by default - 5, which seemed to be a relatively small number
+- method = 'pmm' - the selected method, specifies the method of imputation to be used on individual variables - the allowed values are NULL (then the function refers to the 
+defaultMethod parameter not defined here), single string (the method used for all variables) or the string vector (for each variable the method is defined separately);  By 
+default, the method uses pmm, predictive mean matching (numeric data) logreg, logistic regression imputation (binary
+data, factor with 2 levels) polyreg, polytomous regression imputation for unordered categorical data (factor > 2 levels) polr, proportional odds model for
+(ordered, > 2 levels).
+- seed = 0 - value for a shift of the pseudo-random number generator; in general, we leave it blank - when adding value, we gain in repeatability of our 
+calculations (which is important for testing);
+
+Symmary of imputed data:)
 
 ```{r}
 summary(imputed_Data)
@@ -90,6 +115,7 @@ summary(imputed_Data)
 #imputed_Data$imp$agea
 ```
 Wybór jednego z uzupełnionych zbiorów i jego podsumowanie:
+(Eng: One of the completed collections is selected and summarized:)
 
 ```{r}
 completeData <- complete(imputed_Data,2)
@@ -99,6 +125,7 @@ summary(completeData)
 ```
 
 Sztuczki stringowe, ponieważ pisanie na sztywno stringów, które da się wyliczyć jest poniżej moich umiejętności:
+(eng: String tricks, because writing hard strings that can be calculated is below my skills:)
 
 ```{r}
 n <- names(df)
@@ -106,6 +133,7 @@ f <- paste("HAPPY_BIN ~", paste(n[!n %in% "HAPPY_BIN"], collapse = " + "))
 
 ```
 Tworzenie regresji logistycznej dla wszystkich 5 zbiorów imputowanych:
+(Eng: Creating logistic regression for all 5 imputed collections:)
 
 ```{r}
 
@@ -113,6 +141,7 @@ fit <- with(data = imputed_Data, exp = glm(as.formula(f)))
 
 ```
 Tworzenie wspólnego modelu dla wszystkich zbiorów i jego podsumowanie:
+(Eng: Creating a joint model for all collections and its summary:)
 
 ```{r}
 
